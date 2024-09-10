@@ -19,15 +19,19 @@ async fn main(spawner: Spawner) {
     let io = Io::new(peripherals.GPIO, peripherals.IO_MUX);
 
     let led1 = Output::new(io.pins.gpio4, Level::Low);
-    let mut led2 = Output::new(io.pins.gpio5, Level::Low);
+    let led2 = Output::new(io.pins.gpio5, Level::Low);
 
-    let mut button = Input::new(io.pins.gpio9, Pull::Up);
+    let button = Input::new(io.pins.gpio9, Pull::Up);
 
     spawner.must_spawn(blinky(led1));
 
+    handle_gpio(button, led2).await;
+}
+
+async fn handle_gpio(mut button: Input<'static>, mut led: Output<'static>) {
     loop {
         button.wait_for_rising_edge().await;
-        led2.toggle();
+        led.toggle();
     }
 }
 
