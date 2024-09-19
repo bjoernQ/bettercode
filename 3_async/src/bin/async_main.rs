@@ -1,13 +1,13 @@
 #![no_std]
 #![no_main]
 
-use core::future::Future;
-
 use embassy_executor::Spawner;
 use embassy_time::{Duration, Timer};
 use esp_backtrace as _;
-use esp_hal_embassy::main;
-use esp_println::println;
+use esp_hal::{
+    gpio::{Input, Io, Level, Output, Pull},
+    prelude::*,
+};
 
 #[main]
 async fn main(spawner: Spawner) {
@@ -16,46 +16,29 @@ async fn main(spawner: Spawner) {
     let timg0 = esp_hal::timer::timg::TimerGroup::new(peripherals.TIMG0);
     esp_hal_embassy::init(timg0.timer0);
 
-    spawner.must_spawn(example());
+    let io = Io::new(peripherals.GPIO, peripherals.IO_MUX);
 
+    let led1 = Output::new(io.pins.gpio4, Level::Low);
+    let led2 = Output::new(io.pins.gpio5, Level::Low);
+
+    let button = Input::new(io.pins.gpio9, Pull::Up);
+
+    spawner.must_spawn(blinky(led1));
+
+    handle_gpio(button, led2).await;
+}
+
+async fn handle_gpio(mut button: Input<'static>, mut led: Output<'static>) {
     loop {
-        Timer::after(Duration::from_millis(500)).await;
-        println!("tick");
+        button.wait_for_rising_edge().await;
+        led.toggle();
     }
 }
 
 #[embassy_executor::task]
-async fn example() {
-    let res = MyFuture { count: 100_0000 }.await;
-    println!("Result is {res}");
-}
-
-struct MyFuture {
-    count: usize,
-}
-
-impl Future for MyFuture {
-    type Output = usize;
-
-    fn poll(
-        mut self: core::pin::Pin<&mut Self>,
-        cx: &mut core::task::Context<'_>,
-    ) -> core::task::Poll<Self::Output> {
-        if self.count == 100_0000 {
-            println!("Polled first time");
-        }
-
-        if self.count == 0 {
-            println!("Ready");
-        }
-
-        if self.count > 0 {
-            self.count -= 1;
-
-            cx.waker().wake_by_ref();
-            core::task::Poll::Pending
-        } else {
-            core::task::Poll::Ready(42)
-        }
+async fn blinky(mut led: Output<'static>) {
+    loop {
+        led.toggle();
+        Timer::after(Duration::from_millis(500)).await;
     }
 }
