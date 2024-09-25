@@ -5,6 +5,7 @@ use esp_backtrace as _;
 use esp_hal::delay::Delay;
 use esp_hal::gpio::{Io, Level, Output};
 use esp_hal::prelude::*;
+use esp_println::println;
 
 #[entry]
 fn main() -> ! {
@@ -14,7 +15,9 @@ fn main() -> ! {
 
     let mut led = Output::new(io.pins.gpio4, Level::Low);
     loop {
+        println!("toggle");
         led.toggle();
+        
         delay.delay(500.millis());
     }
 }

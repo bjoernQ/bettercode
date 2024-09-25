@@ -26,8 +26,10 @@ async fn main(spawner: Spawner) {
 
 #[embassy_executor::task]
 async fn example() {
-    let res = MyFuture { count: 100_0000 }.await;
-    println!("Result is {res}");
+    loop {
+        let res = MyFuture { count: 100_0000 }.await;
+        println!("Result is {res}");
+    }
 }
 
 struct MyFuture {

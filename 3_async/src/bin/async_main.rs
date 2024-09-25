@@ -8,6 +8,7 @@ use esp_hal::{
     gpio::{Input, Io, Level, Output, Pull},
     prelude::*,
 };
+use esp_println::println;
 
 #[main]
 async fn main(spawner: Spawner) {
@@ -31,6 +32,8 @@ async fn main(spawner: Spawner) {
 async fn handle_gpio(mut button: Input<'static>, mut led: Output<'static>) {
     loop {
         button.wait_for_rising_edge().await;
+
+        println!("toggle LED2");
         led.toggle();
     }
 }
@@ -38,7 +41,9 @@ async fn handle_gpio(mut button: Input<'static>, mut led: Output<'static>) {
 #[embassy_executor::task]
 async fn blinky(mut led: Output<'static>) {
     loop {
+        println!("toggle LED1");
         led.toggle();
+        
         Timer::after(Duration::from_millis(500)).await;
     }
 }

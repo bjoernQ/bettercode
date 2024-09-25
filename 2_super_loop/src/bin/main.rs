@@ -5,6 +5,7 @@ use esp_backtrace as _;
 use esp_hal::delay::Delay;
 use esp_hal::gpio::{Input, Io, Level, Output, Pull};
 use esp_hal::prelude::*;
+use esp_println::println;
 
 #[entry]
 fn main() -> ! {
@@ -19,10 +20,12 @@ fn main() -> ! {
     let mut prev_button_state = true;
 
     loop {
+        println!("toggle LED1");
         led1.toggle();
         delay.delay(500.millis());
 
         if button.is_low() && prev_button_state {
+            println!("toggle LED2");
             led2.toggle();
         }
 
