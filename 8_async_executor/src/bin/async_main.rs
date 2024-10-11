@@ -57,6 +57,8 @@ pub fn run<F1: Future, F2: Future>(mut fut1: F1, mut fut2: F2) -> ! {
     static VTABLE: RawWakerVTable = RawWakerVTable::new(
         |cx| RawWaker::new(cx, &VTABLE),
         |cx| {
+            // in our implementation `wake` will just flag the task as woken
+            // so we know which tasks can make progress
             let cx = cx as *mut bool;
             unsafe {
                 *cx = true;
@@ -101,6 +103,7 @@ pub fn run<F1: Future, F2: Future>(mut fut1: F1, mut fut2: F2) -> ! {
             task2_woken = false;
         }
 
+        // wait for an interrupt - we know none of the futures would be able to make progress
         unsafe {
             asm!("wfi");
         }

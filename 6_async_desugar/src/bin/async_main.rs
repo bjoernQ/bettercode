@@ -51,10 +51,11 @@ async fn blinky_task(led: Output<'static>) {
 #[allow(unused)]
 async fn blinky(mut led: Output<'static>) {
     loop {
+        Timer::after(Duration::from_millis(500)).await;
+
         println!("toggle LED2");
         led.toggle();
 
-        Timer::after(Duration::from_millis(500)).await;
     }
 }
 
@@ -66,6 +67,9 @@ async fn handle_gpio(mut button: Input<'static>, mut led: Output<'static>) {
         led.toggle();
     }
 }
+
+// This is NOT what the compiler really does but should
+// illustrate the idea.
 
 struct Blinky {
     state: State,
@@ -87,11 +91,15 @@ impl Future for Blinky {
     ) -> core::task::Poll<Self::Output> {
         match &mut self.state {
             State::State0 => {
+                // = "Timer::after(Duration::from_millis(500))"
+
                 let wait = Timer::after(Duration::from_millis(500));
                 let wait = Box::new(wait);
                 self.state = State::State1(wait);
             }
             State::State1(ref mut wait) => {
+                // = ".await;"
+
                 let mut fut = unsafe { Pin::new_unchecked(&mut **wait) };
                 match fut.as_mut().poll(cx) {
                     core::task::Poll::Ready(_) => self.state = State::State2,

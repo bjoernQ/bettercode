@@ -27,6 +27,7 @@ async fn main(spawner: Spawner) {
 #[embassy_executor::task]
 async fn example() {
     loop {
+        // async functions return `impl Future` - so we also can just `await` our own future
         let res = MyFuture { count: 100_0000 }.await;
         println!("Result is {res}");
     }
@@ -40,7 +41,15 @@ impl Future for MyFuture {
     type Output = usize;
 
     fn poll(
+        // Pinning is an add-on contract that states the memory of the pointer cannot be moved. 
+        // For Futures, this is a requirement because the future may contain separate references that also point to same memory.
+        // If the memory were moved, those references would become invalid and cause UB.
         mut self: core::pin::Pin<&mut Self>,
+
+        // The context of an asynchronous task.
+        //
+        // Currently, `Context` only serves to provide access to a [`&Waker`](Waker)
+        // which can be used to wake the current task.
         cx: &mut core::task::Context<'_>,
     ) -> core::task::Poll<Self::Output> {
         if self.count == 100_0000 {
@@ -54,6 +63,7 @@ impl Future for MyFuture {
         if self.count > 0 {
             self.count -= 1;
 
+            // immediately wake
             cx.waker().wake_by_ref();
             core::task::Poll::Pending
         } else {

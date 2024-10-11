@@ -16,6 +16,7 @@ use esp_hal::{
 };
 use esp_println::println;
 
+// we are back to non-async main
 #[entry]
 fn main() -> ! {
     let peripherals = esp_hal::init(esp_hal::Config::default());
@@ -30,6 +31,7 @@ fn main() -> ! {
 
     let button = Input::new(io.pins.gpio9, Pull::Up);
 
+    // run our own executor
     run(blinky(led1), handle_gpio(button, led2));
 }
 
@@ -53,6 +55,15 @@ async fn blinky(mut led: Output<'static>) {
 
 // A polling executor - always executing two Futures, never expected to return
 pub fn run<F1: Future, F2: Future>(mut fut1: F1, mut fut2: F2) -> ! {
+    // A virtual function pointer table that specifies the behavior of a [`RawWaker`].
+    //
+    // The pointer passed to all functions inside the vtable is the `data` pointer
+    // from the enclosing [`RawWaker`] object.
+    //
+    // The functions inside this struct are only intended to be called on the `data`
+    // pointer of a properly constructed [`RawWaker`] object from inside the
+    // [`RawWaker`] implementation. Calling one of the contained functions using
+    // any other `data` pointer will cause undefined behavior.    
     static VTABLE: RawWakerVTable = RawWakerVTable::new(
         |_| RawWaker::new(ptr::null(), &VTABLE),
         |_| {},

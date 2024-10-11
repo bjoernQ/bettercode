@@ -10,6 +10,7 @@ use esp_hal::{
 };
 use esp_println::println;
 
+// see ... this is async now - it's an automatically spawned task
 #[main]
 async fn main(spawner: Spawner) {
     let peripherals = esp_hal::init(esp_hal::Config::default());
@@ -29,6 +30,7 @@ async fn main(spawner: Spawner) {
     handle_gpio(button, led2).await;
 }
 
+// An async function called by `main`
 async fn handle_gpio(mut button: Input<'static>, mut led: Output<'static>) {
     loop {
         button.wait_for_rising_edge().await;
@@ -38,6 +40,7 @@ async fn handle_gpio(mut button: Input<'static>, mut led: Output<'static>) {
     }
 }
 
+// Another task spawned from `main`
 #[embassy_executor::task]
 async fn blinky(mut led: Output<'static>) {
     loop {

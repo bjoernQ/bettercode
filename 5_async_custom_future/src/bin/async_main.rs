@@ -55,6 +55,7 @@ async fn blinky(mut led: Output<'static>) {
     }
 }
 
+// When there is an interrupt we wake the waker
 #[handler]
 fn gpio_interrupt_handler() {
     critical_section::with(|cs| {
@@ -68,6 +69,7 @@ fn gpio_interrupt_handler() {
     });
 }
 
+// we need to store the waker in a way the interrupt handler can access it
 static BUTTON_WAKER: Mutex<RefCell<Option<Waker>>> = Mutex::new(RefCell::new(None));
 
 struct WaitForButtonFuture {}
